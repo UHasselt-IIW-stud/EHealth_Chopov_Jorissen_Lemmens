@@ -1,12 +1,35 @@
-// probeer gsr en ppg data te verwerken
-// kijk welke waarden men uit gsr en ppg data kan halen waarmee we de link met stress kunnen leggen
-// vragen voor thijs:
-    // kunnen we de verwerkte data ook via een website (html) displayen ipv een app?
-    // of we zo een batterij om aan het bordje te hangen zouden kunnen krijgen
-    // hoe belangrijk is het gebruik van bussen? we zouden de gsr sensor op een miso kunnen zetten maar heeft dat veel nut als het maar 1 sensor die op deze lijn staat? (mss staat antwoord in de slides moet ge eens nakijken)
-    // kunnen we verschillende sample rates gebruiken op 1 ESP bordje?
-    // ...
+# vragen voor thijs: (Ge kunt eerst zelf over een paar vragen nadenken voordat ge ze stelt tho kan zijn dat mn vragen retarded zijn)
+    # moet ge met platformio alleen maar raw sensor data naar de influx sturen? of mag men al bewerkingen doen in platformio? (mss is het doorsturen van data dan trager?)
+    # Is het de bedoeling om bij de final product ervoor te zorgen dat we onze laptop totaal niet meer moeten gebruiken? dus zonder het opstarten van containers? (lijkt me onlogisch)
+    # Vraag of ze van die electrode skin tape dingen kunnen geven / als ze dat hebben.
+    # kunnen we de verwerkte data ook via een website (html) displayen ipv een app?
+    # of we zo een batterij om aan het bordje te hangen zouden kunnen krijgen
+    # hoe belangrijk is het gebruik van SPI's? we zouden de gsr sensor op een miso kunnen zetten maar heeft dat veel nut als het maar 1 sensor is die op deze lijn staat? (mss staat antwoord in de slides moet ge eens nakijken)
+    # kunnen we verschillende sample rates gebruiken op 1 ESP bordje? Omdat een goeie sample rate voor gsr tussen 1-10 Hz is en die van ppg tussen 20 - 50 Hz
     
+    # ...
+
+# WAT ER IN DE CODE GEBEURT
+# Code is heel gelijkaardig aan de code van de opdracht met ECG data
+# In deze code halen we nu gewoon alle waardes uit de influx, dus: Accelerometer (x,y,z - beweging), ppg meting, gsr meting)
+# elke soort data zetten we in een aparte dataframe
+# waardes die we willen gebruiken zetten we om naar numeric (kan zijn dat da voor de value niet moet, zou ge eens kunnen proberen ofdat da zo is)
+# daarna berekenen we maar snel het gemiddelde om te kijken of we effectief iets kunnen doen met die data
+# ...
+
+# WAT TE DOEN
+# probeer gsr en ppg data te verwerken
+# kijk welke waarden men uit gsr en ppg data kan halen waarmee we de link met stress kunnen leggen
+# als ge gewoon al weet welke waardes we moeten meten (gelijk oxygen lvl, hartslag, bloodflow) kunt  ge ze daarna filteren en printen
+# dan zitten we al ver
+# ge zou de snelheid uit een accelerometer kunnen bepalen maar dat is al moeilijker denk ik (als het zelfs gaat om snelheid te berekenen)
+# het zou kunnen zijn dat ge in uw main.cpp uw setup van uw ppg signaal moet aanpassen naarmate welke metingen ge wilt gaan doen (ale dat gok ik toch)
+
+# ALS WIFI/INFLUX NIET WERKT
+# in uw main.cpp file line 65 in comment zetten en dan de code eens proberen te runnen
+# laptop met zelfde wifi als bordje verbinden om met influx te connecten
+# docker opstarten om met influx te connecten
+
 import influxdb_client
 import os
 import time
