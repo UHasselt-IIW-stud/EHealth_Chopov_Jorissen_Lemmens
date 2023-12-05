@@ -1,3 +1,12 @@
+// probeer gsr en ppg data te verwerken
+// kijk welke waarden men uit gsr en ppg data kan halen waarmee we de link met stress kunnen leggen
+// vragen voor thijs:
+    // kunnen we de verwerkte data ook via een website (html) displayen ipv een app?
+    // of we zo een batterij om aan het bordje te hangen zouden kunnen krijgen
+    // hoe belangrijk is het gebruik van bussen? we zouden de gsr sensor op een miso kunnen zetten maar heeft dat veel nut als het maar 1 sensor die op deze lijn staat? (mss staat antwoord in de slides moet ge eens nakijken)
+    // kunnen we verschillende sample rates gebruiken op 1 ESP bordje?
+    // ...
+    
 import influxdb_client
 import os
 import time
