@@ -34,8 +34,8 @@ TODO:
      - Protocols 
      - ...
   
-  4. Security?
-  5. Lower Power Consumption?
+  4. SECURITY?
+  5. LOWER POWER CONSUMPTION?
 
 
   
