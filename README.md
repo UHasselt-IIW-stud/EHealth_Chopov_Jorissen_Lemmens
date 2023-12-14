@@ -22,7 +22,7 @@ H2:TODO:
      - Data van python naar HTML
      - ...
 
-  4. PRESENTATIE  
+  3. PRESENTATIE  
      - Het idee
      - Gebruikte sensors met uitleg
      - Hoe de communicatie van alle data gebeurt (blockschema) = Software Architecture
@@ -33,8 +33,8 @@ H2:TODO:
      - Demo
      - Protocols 
      - ...
-  5. SECURITY?
-  6. LOWER POWER CONSUMPTION?
+  4. SECURITY?
+  5. LOWER POWER CONSUMPTION?
 
 
   
