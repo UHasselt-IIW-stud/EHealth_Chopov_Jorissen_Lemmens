@@ -8,3 +8,34 @@ Bracelet die PPG en GSR meet. --> om stress te meten: electroden rond vinger met
 - PPG -> hartslagvariabiliteit te meten (mss vervangen met ECG)
 - zouden ook ECG meting erbij kunnen doen --> verandering in hartactiviteit
 - accelerometer om een betere conclusie te kunnen trekken
+
+TODO:
+
+  1. DATA
+     - Verwerken van de data van de sensors
+     - Sturen naar influxDB
+     - ...
+  
+  2. WEBSITE/UI
+    - HTML/CSS website lay-out
+    - HTML data sturen naar python
+    - Data terugsturen van python naar HTML
+     ...
+     
+  3. PRESENTATIE
+     - Het idee
+     - Gebruikte sensors met uitleg
+     - Hoe de communicatie van alle data gebeurt (blockschema) = Software Architecture
+     - Keuzes die gemaakt zijn voor het 'slim' sturen van data naar de DB (RAM, buffer ...)
+     - Toepassing van idee in de medische sector
+     - Hoe het verbeterd zou kunnen worden in de toekomst
+     - Grafieken
+     - Demo
+     - Protocols 
+     - ...
+  
+  4. Security?
+  5. Lower Power Consumption?
+
+
+  
