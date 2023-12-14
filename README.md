@@ -13,28 +13,30 @@ Bracelet die PPG en GSR meet. --> om stress te meten: electroden rond vinger met
 
   1. **DATA**
      - [ ] Verwerken van de data van de sensors 
-     - [] Sturen naar influxDB 
+     - [ ] Sturen naar influxDB 
      - ...
 
   2. **WEBSITE**
-     - [] HTML/CSS lay-out 
-     - [] HTML data sturen naar python 
-     - [] Data van python naar HTML 
+     - [ ] HTML/CSS lay-out 
+     - [ ] HTML data sturen naar python 
+     - [ ] Data van python naar HTML 
      - ...
 
   3. **PRESENTATIE**  
-     - [] Het idee 
-     - [] Gebruikte sensors met uitleg 
-     - [] Hoe de communicatie van alle data gebeurt (blockschema) = Software Architecture 
-     - [] Keuzes die gemaakt zijn voor het 'slim' sturen van data naar de DB (RAM, buffer ...)
-     - [] Toepassing van idee in de medische sector  
-     - [] Hoe het verbeterd zou kunnen worden in de toekomst 
-     - [] Grafieken 
-     - [] Demo 
-     - [] Protocols 
+     - [ ] Het idee 
+     - [ ] Gebruikte sensors met uitleg 
+     - [ ] Hoe de communicatie van alle data gebeurt (blockschema) = Software Architecture 
+     - [ ] Keuzes die gemaakt zijn voor het 'slim' sturen van data naar de DB (RAM, buffer ...)
+     - [ ] Toepassing van idee in de medische sector  
+     - [ ] Hoe het verbeterd zou kunnen worden in de toekomst 
+     - [ ] Grafieken 
+     - [ ] Demo 
+     - [ ] Protocols 
      - ...
   4. **SECURITY?**
-  5. **LOWER POWER CONSUMPTION?**
+     - [ ] Security toepassen
+  6. **LOWER POWER CONSUMPTION?**
+     - [ ] Power Consumption verlagen 
 
 
   
