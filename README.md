@@ -12,7 +12,7 @@ Bracelet die PPG en GSR meet. --> om stress te meten: electroden rond vinger met
 ## TODO
 
   1. **DATA**
-     - [] Verwerken van de data van de sensors 
+     - [ ] Verwerken van de data van de sensors 
      - [] Sturen naar influxDB 
      - ...
 
