@@ -15,12 +15,14 @@ H2:TODO:
      - Verwerken van de data van de sensors
      - Sturen naar influxDB
      - ...
+
   2. WEBSITE
-    - HTML/CSS website lay-out
-    - HTML data sturen naar python
-    - Data terugsturen van python naar HTML
-     ...
-  3. PRESENTATIE  
+     - HTML/CSS lay-out
+     - HTML data sturen naar python
+     - Data van python naar HTML
+     - ...
+
+  4. PRESENTATIE  
      - Het idee
      - Gebruikte sensors met uitleg
      - Hoe de communicatie van alle data gebeurt (blockschema) = Software Architecture
@@ -31,8 +33,8 @@ H2:TODO:
      - Demo
      - Protocols 
      - ...
-  4. SECURITY?
-  5. LOWER POWER CONSUMPTION?
+  5. SECURITY?
+  6. LOWER POWER CONSUMPTION?
 
 
   
