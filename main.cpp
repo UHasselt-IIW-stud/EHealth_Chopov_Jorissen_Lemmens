@@ -1,6 +1,3 @@
-#include <esp32-hal-gpio.h>
-#include <HardwareSerial.h>
-
 #if defined(ESP32)
   #include <WiFiMulti.h>
   WiFiMulti wifiMulti;
@@ -16,26 +13,28 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
-#include <Adafruit_NeoPixel.h>
 #include "MAX30105.h"
 #include "spo2_algorithm.h"
 #include "heartRate.h"
+#include <InfluxDbClient.h>
+#include <InfluxDbCloud.h>
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+#include <SPIFFS.h>
+#include <WebServer.h>
 
 unsigned long PrevMicros = 0;
 uint16_t Sample_TimeUS = 1000*1000/100; //Sample time in microseconds
 MAX30105 ppgSensor;
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
-#include <InfluxDbClient.h>
-#include <InfluxDbCloud.h>
-
 #define I2C_SDA_PIN 8
 #define I2C_SCL_PIN 10
 // WiFi AP SSID
-#define WIFI_SSID SSID_thuis
+#define WIFI_SSID SSID_4G
 // WiFi password
-#define WIFI_PASSWORD Password_thuis
-#define INFLUXDB_URL url_thuis
+#define WIFI_PASSWORD Password_4G
+#define INFLUXDB_URL url_4G
 #define INFLUXDB_TOKEN "H1DRZGTLN5Dcau4KwiHIdGnZFOe-ZSJf4m9uNJ6Uu99LYf3_wE_JPrWL29SXwybYPDL6HtnuTJO2fatfCLBhhg==" 
 #define INFLUXDB_ORG "EHealth"
 #define INFLUXDB_BUCKET "Raw_Data_ecg_bloeddruk"
@@ -75,9 +74,10 @@ long lastBeat = 0; //Time at which the last beat occurred
 float beatsPerMinute; //stores the BPM as per custom algorithm
 int beatAvg = 0, sp02Avg = 0; //stores the average BPM and SPO2 
 float ledBlinkFreq; //stores the frequency to blink the pulseLED
-
+String name;
 #define MAX30105_I2C_ADDRESS 0x57 // MAX30105 sensor I2C address
 #define ADXL345_I2C_ADDRESS 0x53  // or 0x1D depending on the ADXL345 address configuration
+AsyncWebServer server(80);
 
 void setup() {
   delay(10000);
@@ -147,6 +147,24 @@ void setup() {
 
   ppgSensor.setup(ledBrightness, sampleAverage, ledMode, sampleRate, pulseWidth, adcRange); //Configure sensor with these settings
 
+  // Handle root and submit paths
+	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+		request->send(SPIFFS, "/ehealth.html");
+	});
+	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+		request->send(SPIFFS, "/ehealth.css");
+	});
+
+  // Initialize SPIFFS
+  if (!SPIFFS.begin()) {
+      Serial.println("Failed to mount file system");
+      return;
+  }
+
+  server.serveStatic("/ehealth.css", SPIFFS, "/ehealth.css");
+
+  // Start the server
+  server.begin();
 }
 
 void sendDataToInfluxDB(float gsrValue, float acceleration_X, float acceleration_Y, float acceleration_Z, float sp02Avg, float beatAvg) {
@@ -172,6 +190,9 @@ void sendDataToInfluxDB(float gsrValue, float acceleration_X, float acceleration
     accelerator.addField("acceleration_Z", acceleration_Z);
     ppgmeter.addField("sp02", sp02Avg);
     ppgmeter.addField("bpm", beatAvg);
+    ppgmeter.addTag("name:", name);
+    ppgmeter.clearTags();
+
     // Write the point to InfluxDB
     if (client.writePoint(sensor) and client.writePoint(accelerator) and client.writePoint(ppgmeter)) {
       //Serial.println("Data sent to InfluxDB successfully!");
@@ -218,7 +239,6 @@ void loop(){
       redBuffer[i - 25] = redBuffer[i];
       irBuffer[i - 25] = irBuffer[i];
     }
-    long irValue;
     //take 25 sets of samples before calculating the heart rate.
     for (byte i = 75; i < 100; i++)
     {
@@ -230,7 +250,7 @@ void loop(){
       irBuffer[i] = ppgSensor.getIR();
       ppgSensor.nextSample(); //We're finished with this sample so move to next sample
 
-      irValue = irBuffer[i];
+      long irValue = irBuffer[i];
 
       //Calculate BPM independent of Maxim Algorithm. 
       if (checkForBeat(irValue) == true && irValue > 50000)
@@ -241,6 +261,7 @@ void loop(){
       
         beatsPerMinute = 60 / (delta / 1000.0);
         beatAvg = (beatAvg+beatsPerMinute)/2;
+
       }
       if(millis() - lastBeat > 10000)
       {
@@ -253,11 +274,15 @@ void loop(){
     maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spo2, &validSPO2, &heartRate, &validHeartRate);
   
     //Calculates average SPO2 to display smooth transitions on Blynk App
-    if(validSPO2 == 1 && spo2 < 100 && spo2 > 0 && irValue > 50000)
+    if(validSPO2 == 1 && spo2 < 100 && spo2 > 0 && beatAvg > 40)
     {
       sp02Avg = (sp02Avg+spo2)/2;
     }
-
+    else if (beatAvg == 0)
+    {
+      sp02Avg = 0;
+    }
+    //server.handleClient();
     sensors_event_t event; 
     accel.getEvent(&event);
     float sensorValue = analogRead(GSR);
@@ -266,4 +291,29 @@ void loop(){
     float acceleration_Z = event.acceleration.z;
     sendDataToInfluxDB(sensorValue, acceleration_X, acceleration_Y, acceleration_Z, sp02Avg, beatAvg);
   }
+}
+
+void handleRoot(AsyncWebServerRequest *request) {
+    if (request->url() == "/") {
+        request->send(SPIFFS, "/ehealth.html", "text/html");
+    } else if (request->url() == "/ehealth.css") {
+        request->send(SPIFFS, "/ehealth.css", "text/css");
+    }
+}
+
+void handleSubmit(AsyncWebServerRequest *request) {
+    // Handle form submission
+    if (request->hasArg("name") && request->hasArg("age") && request->hasArg("gender") && request->hasArg("weight") && request->hasArg("height")) {
+        String name = request->arg("name");
+        int age = request->arg("age").toInt();
+        String gender = request->arg("gender");
+        float weight = request->arg("weight").toFloat();
+        float height = request->arg("height").toFloat();
+
+        // Now you can use these values as needed, e.g., send them to InfluxDB
+        // Send a response to the client
+        request->send(200, "text/plain", "Data submitted successfully!");
+    } else {
+        request->send(400, "text/plain", "Bad Request");
+    }
 }
