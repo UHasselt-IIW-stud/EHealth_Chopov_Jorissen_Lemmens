@@ -1,0 +1,49 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EHealth User Data Form</title>
+    <link rel="stylesheet" href="ehealth.css">
+</head>
+<body>
+    <div class="container">
+        <a href="ehealth.html" class="logo-link">
+            <img src="uhasselt.png" alt="Uhasselt Logo" class="logo">
+        </a>
+        <h2>User Information</h2>
+        <form id="userForm">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="age">Age:</label>
+            <input type="number" id="age" name="age" required>
+ 
+            <label for="weight">Weight (kg):</label>
+            <input type="number" id="weight" name="weight" required>
+
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender" required>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+           </select>
+
+            <label for="height">Height (cm):</label>
+            <input type="number" id="height" name="height" required>
+
+            <button type="button" onclick="submitForm()">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        function submitForm() {
+            var form = document.getElementById("userForm");
+            var formData = new FormData(form);
+
+            fetch("/submit", {
+                method: "POST",
+                body: formData
+            });
+        }
+    </script>
+</body>
+</html>
