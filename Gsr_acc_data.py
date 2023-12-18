@@ -1,36 +1,3 @@
-'''
-Analyzing physiological data like GSR (Galvanic Skin Response), BPM (Heart Rate), and SpO2 (Oxygen Saturation) can provide insights into stress levels. Here are some data analyses and insights you could derive:
-
-GSR Analysis:
-Skin conductance typically increases with stress. Look for spikes or overall trends in GSR values that indicate higher arousal levels.
-Analyze the baseline GSR levels during different periods to compare and understand variations. Elevated GSR might indicate stress.
-
-Heart Rate (BPM) Analysis:
-High BPM might signify stress or anxiety. Analyze BPM variations over time.
-Look for patterns in BPM during different activities or events. Stressful situations could cause higher heart rates.
-
-Oxygen Saturation (SpO2) Analysis:
-Decreases in SpO2 could suggest physiological stress or anxiety.
-Check for any correlations between SpO2 levels and stressful events or situations.
-
-Correlation Analysis:
-Explore correlations between GSR, BPM, and SpO2. Changes in one physiological parameter might correlate with changes in another during stress episodes.
-
-Statistical Analysis:
-Calculate statistical measures (mean, median, standard deviation) of GSR, BPM, and SpO2 during different timeframes (e.g., before, during, after stress-inducing events).
-Perform paired t-tests or ANOVA to analyze differences in physiological parameters under different stress conditions.
-
-Visualization:
-Create visualizations like scatter plots, histograms, or box plots to represent the distribution and relationship between physiological parameters and stress levels.
-
-Time Series Analysis:
-Analyze the time series trends of physiological data to identify stress patterns during specific time frames or activities.
-
-Machine Learning (Optional):
-Utilize machine learning algorithms for stress prediction or classification based on the physiological data collected.
-Remember, while these analyses might provide insights, interpreting physiological data in the context of stress requires a comprehensive understanding of the individual's context and environmental factors. Additionally, it might be beneficial to compare the data with self-reported stress levels or subjective experiences to validate findings.
-'''
-
 
 import influxdb_client
 import os
@@ -44,13 +11,14 @@ import random
 import Preferences
 import numpy as np
 from scipy.signal import butter, lfilter
-
+from flask import Flask, jsonify
 
 client = influxdb_client.InfluxDBClient(url=Preferences.url, token=Preferences.token, org=Preferences.org)
 
 sample_rate = 100
 bucket = "Raw_Data_ecg_bloeddruk"
 
+app = Flask(__name__)
 
 query_api = client.query_api()
 
@@ -64,6 +32,7 @@ combined_query = """from(bucket: "Raw_Data_ecg_bloeddruk")
 """
 
 tables = query_api.query(combined_query, org="EHealth")
+
 
 def extract_data_from_records(tables):
     gsr_data = []
@@ -96,10 +65,11 @@ def extract_data_from_records(tables):
 
     return gsr_data, x_acc_data, y_acc_data, z_acc_data, bpm, sp02
 
+
 # Function to convert data to DataFrames and make values numeric
 def convert_to_numeric_and_create_df(tables):
     gsr_data, x_acc_data, y_acc_data, z_acc_data, bpm, sp02 = extract_data_from_records(tables)
-    
+
     # Convert data to DataFrames
     df_gsr = pd.DataFrame(gsr_data, columns=["Time", "Measurement", "Value"])
     df_acc_x = pd.DataFrame(x_acc_data, columns=["Time", "Measurement", "Value"])
@@ -107,7 +77,7 @@ def convert_to_numeric_and_create_df(tables):
     df_acc_z = pd.DataFrame(z_acc_data, columns=["Time", "Measurement", "Value"])
     bpm = pd.DataFrame(bpm, columns=["Time", "Measurement", "Value"])  # DataFrame for rValue
     sp02 = pd.DataFrame(sp02, columns=["Time", "Measurement", "Value"])  # DataFrame for irValue
-    
+
     # Convert "Value" column to numeric in each DataFrame
     df_gsr["Value"] = pd.to_numeric(df_gsr["Value"], errors="coerce")
     df_acc_x["Value"] = pd.to_numeric(df_acc_x["Value"], errors="coerce")
@@ -116,7 +86,6 @@ def convert_to_numeric_and_create_df(tables):
     bpm["Value"] = pd.to_numeric(bpm["Value"], errors="coerce")
     sp02["Value"] = pd.to_numeric(sp02["Value"], errors="coerce")
 
-    
     df_gsr["Value"] = np.nan_to_num(df_gsr["Value"])
     df_acc_x["Value"] = np.nan_to_num(df_acc_x["Value"])
     df_acc_y["Value"] = np.nan_to_num(df_acc_y["Value"])
@@ -125,6 +94,7 @@ def convert_to_numeric_and_create_df(tables):
     sp02["Value"] = np.nan_to_num(sp02["Value"])
 
     return df_gsr, df_acc_x, df_acc_y, df_acc_z, bpm, sp02
+
 
 def filtered_bpm_values(bpm):
     filtered_bpm = bpm.copy()
@@ -158,7 +128,6 @@ def filtered_bpm_values(bpm):
         # Check if no elements were removed in this iteration
         if len(filtered_bpm) == prev_length:
             break  # If no elements were removed, exit the loop
-        
 
     filtered_bpm = filtered_bpm[(filtered_bpm['Value'] >= 40) & (filtered_bpm['Value'] <= 180)]
 
@@ -179,15 +148,18 @@ def calibrated_gsr(gsr_data):
         return mapped_value
 
     # Calibrate each GSR value in the dataset
-    calibrated_gsr_data['Value'] = [calibrate_gsr(value, actual_min, actual_max, new_min, new_max) for value in gsr_data["Value"]]
+    calibrated_gsr_data['Value'] = [calibrate_gsr(value, actual_min, actual_max, new_min, new_max) for value in
+                                    gsr_data["Value"]]
 
     return calibrated_gsr_data
+
 
 def calibrated_z_acc_data(z_acc_data):
     # Adding 10 to every value
     z_acc_data['Value'] = z_acc_data['Value'].add(10)
 
     return z_acc_data
+
 
 def calculate_stress_level(sp02_data, bpm_data, gsr_data):
     stress_level = 0
@@ -198,27 +170,27 @@ def calculate_stress_level(sp02_data, bpm_data, gsr_data):
         if i - 1 >= 0:
             # Check conditions and update stress level
             if (
-                (gsr_data[i] > gsr_data[i - 1]) and
-                (bpm_data[i] > bpm_data[i - 1]) and
-                (sp02_data[i] <= sp02_data[i - 1])
+                    (gsr_data[i] > gsr_data[i - 1]) and
+                    (bpm_data[i] > bpm_data[i - 1]) and
+                    (sp02_data[i] <= sp02_data[i - 1])
             ):
                 stress_level += 1
             elif (
-                (gsr_data[i] > gsr_data[i - 1]) and
-                (bpm_data[i] < bpm_data[i - 1]) and
-                (sp02_data[i] < sp02_data[i - 1])
+                    (gsr_data[i] > gsr_data[i - 1]) and
+                    (bpm_data[i] < bpm_data[i - 1]) and
+                    (sp02_data[i] < sp02_data[i - 1])
             ):
                 stress_level += 1
             elif (
-                (gsr_data[i] < gsr_data[i - 1]) and
-                (bpm_data[i] < bpm_data[i - 1]) and
-                (sp02_data[i] > sp02_data[i - 1])
+                    (gsr_data[i] < gsr_data[i - 1]) and
+                    (bpm_data[i] < bpm_data[i - 1]) and
+                    (sp02_data[i] > sp02_data[i - 1])
             ):
                 stress_level = max(0, stress_level - 1)  # Ensure stress level doesn't go below 0
             elif (
-                (gsr_data[i] < gsr_data[i - 1]) and
-                (bpm_data[i] > bpm_data[i - 1]) and
-                (sp02_data[i] > sp02_data[i - 1])
+                    (gsr_data[i] < gsr_data[i - 1]) and
+                    (bpm_data[i] > bpm_data[i - 1]) and
+                    (sp02_data[i] > sp02_data[i - 1])
             ):
                 stress_level = max(0, stress_level - 1)  # Ensure stress level doesn't go below 0
 
@@ -230,9 +202,7 @@ def calculate_stress_level(sp02_data, bpm_data, gsr_data):
     return stress_levels
 
 
-
 def plot_all():
-
     print("\nsp02:")
     print(sp02['Value'].mean())
 
@@ -243,24 +213,24 @@ def plot_all():
     fig, axs = plt.subplots(nrows=5, ncols=1, figsize=(20, 24))
 
     # Plot GSR data
-    axs[0].plot(gsr_data['Value'], color='orange', label = 'raw')
-    axs[0].plot(calibrated_gsr_data['Value'], color='blue', label = 'calibrated')
-    axs[0].plot(calibrated_gsr_data['Value'].rolling(window=20).mean(), color='green', label = 'rolling mean')
+    axs[0].plot(gsr_data['Value'], color='orange', label='raw')
+    axs[0].plot(calibrated_gsr_data['Value'], color='blue', label='calibrated')
+    axs[0].plot(calibrated_gsr_data['Value'].rolling(window=20).mean(), color='green', label='rolling mean')
     axs[0].legend()
     axs[0].grid()
     axs[0].set_title('GSR Data')
 
     # Plot BPM data
-    #axs[1].plot(bpm['Value'], color='black', label = 'raw')
-    #axs[1].plot(filtered_bpm['Value'], color='red', label = 'filtered')
-    axs[1].plot(filtered_bpm['Value'].rolling(window=20).mean(), color='green', label = 'rolling mean')
+    # axs[1].plot(bpm['Value'], color='black', label = 'raw')
+    # axs[1].plot(filtered_bpm['Value'], color='red', label = 'filtered')
+    axs[1].plot(filtered_bpm['Value'].rolling(window=20).mean(), color='green', label='rolling mean')
     axs[1].legend()
     axs[1].grid()
     axs[1].set_title('BPM Data')
 
     # Plot SpO2 data
-    axs[2].plot(sp02['Value'], color='black', label = 'raw')
-    axs[2].plot(sp02['Value'].rolling(window=20).mean(),color='blue', label = 'rolling mean')
+    axs[2].plot(sp02['Value'], color='black', label='raw')
+    axs[2].plot(sp02['Value'].rolling(window=20).mean(), color='blue', label='rolling mean')
     axs[2].legend()
     axs[2].grid()
     axs[2].set_title('SpO2 Data')
@@ -275,7 +245,7 @@ def plot_all():
     axs[3].grid()
     axs[3].set_title('Movement')
 
-    axs[4].plot(stress_level['Value'], color='black', label = 'stress')
+    axs[4].plot(stress_level['Value'], color='black', label='stress')
     axs[4].legend()
     axs[4].grid()
     axs[4].set_title('stress level')
@@ -284,12 +254,34 @@ def plot_all():
     plt.tight_layout(pad=5.0)
     plt.show()
 
-gsr_data, x_acc_data, y_acc_data, z_acc_data, bpm, sp02 = convert_to_numeric_and_create_df(tables)
-filtered_bpm = filtered_bpm_values(bpm)
-calibrated_gsr_data = calibrated_gsr(gsr_data)
-z_acc_data = calibrated_z_acc_data(z_acc_data)
-stress_level = calculate_stress_level(sp02['Value'].tolist(), filtered_bpm['Value'].tolist(), calibrated_gsr_data['Value'].tolist())
-plot_all()
+@app.route('/api/data', methods=['GET'])
+def get_data():
+    # Fetch the required data for the graphs
+    tables = query_api.query(combined_query, org="EHealth")
+
+    gsr_data, x_acc_data, y_acc_data, z_acc_data, bpm, sp02 = convert_to_numeric_and_create_df(tables)
+    filtered_bpm_data = filtered_bpm_values(bpm)
+    calibrated_gsr_data = calibrated_gsr(gsr_data)
+    z_acc_data = calibrated_z_acc_data(z_acc_data)
+    stress_level = calculate_stress_level(sp02['Value'].tolist(), filtered_bpm_data['Value'].tolist(),
+                                          calibrated_gsr_data['Value'].tolist())
+    # Format the data into a dictionary
+    data = {
+        'gsr': calibrated_gsr_data['Value'].tolist(),
+        'bpm': filtered_bpm_data['Value'].tolist(),
+        'sp02': sp02['Value'].tolist(),
+        'x_acc': x_acc_data['Value'].tolist(),
+        'y_acc': y_acc_data['Value'].tolist(),
+        'z_acc': z_acc_data['Value'].tolist(),
+        'stress_level': stress_level['Value'].tolist(),
+    }
+
+    plot_all()
+
+    return jsonify(data)
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
 '''
 client = influxdb_client.InfluxDBClient(url=Preferences.url, token=Preferences.token, org=Preferences.org)
